@@ -1,1 +1,1 @@
-create database metabase;
+create database if not exists metabase;

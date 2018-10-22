@@ -1,8 +1,8 @@
 version: '3'
 services:
-  mysqld57:
-    container_name: mysqld57
-    hostname: mysql57
+  mysqld:
+    container_name: mysqld
+    hostname: mysql
     image: mysql:5.7
     restart: always
     build: ./docker-mysqld57
@@ -13,10 +13,12 @@ services:
       - "${MYSQLD_PORT}:3306"
     volumes:
       - ./mysqld-data:/var/lib/mysql
+
   metabase:
     image: 'metabase/metabase'
+    container_name: metabase
     depends_on:
-      - mysqld57
+      - mysqld
     environment:
       MB_DB_FILE: /metabase-data/metabase.db
       MB_DB_TYPE: mysql
@@ -24,7 +26,7 @@ services:
       MB_DB_PORT: 3306
       MB_DB_USER: root
       MB_DB_PASS: root
-      MB_DB_HOST: mysqld57
+      MB_DB_HOST: mysqld
     ports:
       - "${METABASE_PORT}:3000"
 
