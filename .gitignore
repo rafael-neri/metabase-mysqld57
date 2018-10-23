@@ -4,6 +4,10 @@
 
 metabase-data/
 mysqld-data/
+logfiles/
+sql/
+
+TIPS*
 
 # IDEs
 .code/
