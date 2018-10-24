@@ -5,6 +5,7 @@ require 'time'
 
 module Application
   class NginxLogParser
+
     # see: https://github.com/nginxinc/nginx-amplify-doc/blob/master/amplify-guide.md#additional-nginx-metrics
     LOG_FORMAT = /
         ([\d\.]+)\s+
@@ -27,6 +28,7 @@ module Application
         cs=([^\s]+)
         (.*)
       /xi
+
     REQUEST_FORMAT = [
       :remote_addr,
       :remote_user,
@@ -45,6 +47,7 @@ module Application
       :upstream_response_length,
       :upstream_cache_status
     ]
+
     attr_reader :log_file, :current_line, :percent_read, :total_lines
 
     def initialize(log_file, regexp = nil)
@@ -58,13 +61,13 @@ module Application
       data = []
       while line_data = readline
         parsed_line = parse_line_to_object(line_data.chomp)
-        data << parsed_line
+        data << parsed_line unless parsed_line.nil?
       end
       data
     end
 
     def format_time_local(dt)
-      t = Time.strptime(dt,"%d/%b/%Y:%H:%M:%S %Z")
+      t = Time.strptime(dt, "%d/%b/%Y:%H:%M:%S %Z")
       t.strftime("%F %T")
     end
 
@@ -86,6 +89,7 @@ module Application
         h
       else
         STDERR.puts line
+        nil
       end
     end
   end
