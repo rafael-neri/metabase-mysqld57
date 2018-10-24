@@ -9,6 +9,9 @@ sql/
 
 TIPS*
 
+/.bundle/
+/vendor/bundle
+
 # IDEs
 .code/
 .idea/

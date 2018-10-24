@@ -3,6 +3,7 @@ exec ruby -S -x $0 "$@"
 #! ruby
 
 require_relative 'nginx_log_parser'
+require 'active_record'
 
 start_time = Time.now
 
@@ -16,46 +17,61 @@ def skip_log_file_parse?
 end
 
 def to_i_for_sql (s)
-  s.nil? ? 'null' : (s.kind_of?(Integer) ? s_to_i : 'null')
+  (s.nil? || s.eql?('-')) ? nil : s.to_i
 end
 
 def to_f_for_sql (s)
-  s.nil? ? 'null' : (s.kind_of?(Float) ? s.to_f : 'null')
+  (s.nil? || s.eql?('-')) ? nil : s.to_f
 end
 
 def to_s_for_sql (s)
-  s.nil? ? 'null' : "'#{s.to_s}'"
+  s.nil? ? nil : s.to_s
 end
 
 def generate_sql_for_mysql(data)
-  q = ''
+  q = []
   data.each do |d|
-    s = "insert into nginx_access_log values ("
-    s << to_s_for_sql(d[:remote_addr])
-    s << ',' + to_s_for_sql(d[:remote_user])
-    s << ',' + to_s_for_sql(d[:time_local])
-    s << ',' + to_s_for_sql(d[:request])
-    s << ',' + to_i_for_sql(d[:status])
-    s << ',' + to_i_for_sql(d[:body_bytes_sent])
-    s << ',' + to_s_for_sql(d[:http_referer])
-    s << ',' + to_s_for_sql(d[:http_user_agent])
-    s << ',' + to_s_for_sql(d[:http_x_forwarded_for])
-    s << ',' + to_s_for_sql(d[:host])
-    s << ',' + to_s_for_sql(d[:server_name])
-    s << ',' + to_f_for_sql(d[:request_time])
-    s << ',' + to_s_for_sql(d[:upstream_addr])
-    s << ',' + to_i_for_sql(d[:upstream_status])
-    s << ',' + to_f_for_sql(d[:upstream_response_time])
-    s << ',' + to_i_for_sql(d[:upstream_response_length])
-    s << ',' + to_s_for_sql(d[:upstream_cache_status])
-    s << ");"
-    s << "\n"
-    q << s
+    s = ["insert into nginx_access_log values (#{Array.new(17, '?').join(',')});",
+
+         d[:remote_addr],
+         d[:remote_user],
+         d[:time_local],
+         d[:request],
+         to_i_for_sql(d[:status]),
+
+         to_i_for_sql(d[:body_bytes_sent]),
+         d[:http_referer],
+         d[:http_user_agent],
+         d[:http_x_forwarded_for],
+         d[:host],
+
+         d[:server_name],
+         to_f_for_sql(d[:request_time]),
+         d[:upstream_addr],
+         to_i_for_sql(d[:upstream_status]),
+         to_f_for_sql(d[:upstream_response_time]),
+
+         to_i_for_sql(d[:upstream_response_length]),
+         d[:upstream_cache_status]
+    ]
+    q << ActiveRecord::Base.send(:sanitize_sql_array, s)
   end
   q
 end
 
-data = nil;
+
+ActiveRecord::Base.establish_connection(
+  :adapter => 'mysql2',
+  :host => '127.0.0.1',
+  :port => 3306,
+  :username => 'root',
+  :password => 'root',
+  :database => 'nginx_log',
+  :encoding => 'utf8',
+  :timeout => 5000
+)
+
+# data = nil;
 unless skip_log_file_parse? then
   ARGV.each do |file|
     print file
