@@ -63,6 +63,7 @@ def parse_request_line(request_line)
   r = Hash[[:http_method, :http_req_uri, :http_ver].zip(
     request_line.to_s.split(' ')
   )]
+  return {} if r.nil? || r[:http_method].nil? || r[:http_method].length > 20
   uri = nil
   begin
     uri = URI(r[:http_req_uri].to_s)
@@ -81,16 +82,19 @@ def generate_sqlx_for_mysql(data)
   data.each do |d|
     rd = parse_request_line(d[:request])
     s = ["insert into nginx_access_log_x values (#{Array.new(14, '?').join(',')});",
+
          d[:time_local],
          d[:remote_addr],
          d[:host],
          to_i_for_sql(d[:status]),
          rd[:http_method],
+
          rd[:http_req_path],
          rd[:http_req_query],
          rd[:http_req_fragment],
          rd[:http_ver],
          d[:request],
+
          d[:http_user_agent],
          to_f_for_sql(d[:request_time]),
          to_i_for_sql(d[:body_bytes_sent]),
