@@ -2,12 +2,19 @@
 *.swp
 *.tmp
 
+
+
+TIPS*
+*.sql
+*.sqlx
+
 metabase-data/
 mysqld-data/
 logfiles/
 sql/
+sqlx/
 
-TIPS*
+
 
 /.bundle/
 /vendor/bundle
